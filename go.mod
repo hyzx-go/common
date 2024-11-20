@@ -1,4 +1,4 @@
-module logging
+module github.com/hyzx-go/logging
 
 go 1.23.0
 
