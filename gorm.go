@@ -1,4 +1,4 @@
-package appLog
+package logging
 
 import (
 	"context"

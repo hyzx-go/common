@@ -2,7 +2,7 @@ package logging
 
 import (
 	"errors"
-	"gorm"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 )

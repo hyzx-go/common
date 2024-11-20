@@ -19,7 +19,7 @@ var (
 // GetLogger returns the singleton logger instance.
 func GetLogger() *logrus.Entry {
 	if logger == nil {
-		InitLogger(DefaultConfig()) // Use default config if not initialized
+		InitLogger(Config{DefaultConf: DefaultConfig()}) // Use default config if not initialized
 	}
 	return logrus.NewEntry(logger)
 }
@@ -29,7 +29,6 @@ type logWrapper struct {
 	log     *logrus.Logger
 	ctx     *gin.Context
 	traceId string
-	once    sync.Once
 }
 
 // Ctx 创建一个新的 logWrapper 实例
@@ -51,6 +50,7 @@ func Ctx(ctx ...*gin.Context) *logWrapper {
 
 // InitLogger initializes the logger with the provided configuration.
 func InitLogger(config Config) {
+	config.DefaultConf = DefaultConfig()
 	once.Do(func() {
 		// 检查并创建日志目录
 		if err := os.MkdirAll(config.LogFileDir, 0755); err != nil {
@@ -68,10 +68,10 @@ func InitLogger(config Config) {
 		// 配置滚动日志文件
 		jsonLogFile := &lumberjack.Logger{
 			Filename:   config.LogFilePath,
-			MaxSize:    10,
-			MaxBackups: 5,
-			MaxAge:     30,
-			Compress:   true,
+			MaxSize:    config.MaxSize,
+			MaxBackups: config.MaxBackups,
+			MaxAge:     config.MaxAge,
+			Compress:   config.Compress,
 		}
 
 		// 配置文本格式和 JSON 格式的 Hook
