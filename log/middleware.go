@@ -1,10 +1,11 @@
-package logging
+package log
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/hyzx-go/common-b2c/utils"
 	"github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -15,7 +16,7 @@ import (
 func RequestLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取或生成 trace ID
-		traceID := GetTraceId(c)
+		traceID := utils.GetTraceId(c)
 		requestParams := extractRequestParams(c) // 提取请求参数
 		startTime := time.Now()
 

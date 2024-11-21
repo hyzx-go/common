@@ -1,7 +1,8 @@
-package logging
+package log
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hyzx-go/common-b2c/utils"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -44,7 +45,7 @@ func Ctx(ctx ...*gin.Context) *logWrapper {
 	return &logWrapper{
 		log:     logger,
 		ctx:     interiorCtx,
-		traceId: GetTraceId(interiorCtx),
+		traceId: utils.GetTraceId(interiorCtx),
 	}
 }
 
