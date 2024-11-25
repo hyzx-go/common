@@ -33,11 +33,13 @@ type SystemConf struct {
 	Local       string `mapstructure:"local" json:"local" yaml:"local"`
 	Lang        string `mapstructure:"lang" json:"lang" yaml:"lang"`
 	TimeZone    string `mapstructure:"time_zone" json:"timeZone" yaml:"time_zone"`
+	IsDebug     bool   `mapstructure:"is_debug" json:"isDebug" yaml:"is_debug"`
+	AuthSecret  string `mapstructure:"auth_secret" json:"authSecret" yaml:"auth_secret"`
 }
 
 type LogConf struct {
-	LogDir               string `mapstructure:"service_name" json:"logDir" yaml:"log_dir"`
-	LogFile              string `mapstructure:"service_name" json:"logFile" yaml:"log_file"`
+	Dir                  string `mapstructure:"dir" json:"dir" yaml:"dir"`
+	File                 string `mapstructure:"file" json:"file" yaml:"file"`
 	StackFilter          string `mapstructure:"stack_filter" json:"stackFilter" yaml:"stack_filter"`
 	EnableTerminalOutput bool   `mapstructure:"enable_terminal_output" json:"enableTerminalOutput" yaml:"enable_terminal_output"`
 	EnableFileOutput     bool   `mapstructure:"enable_file_output" json:"enableFileOutput" yaml:"enable_file_output"`
@@ -82,6 +84,14 @@ type OssConf struct {
 	Endpoint     string `mapstructure:"endpoint" json:"endpoint" yaml:"endpoint"`
 	RoleArn      string `mapstructure:"role_arn" json:"roleArn" yaml:"role_arn"`
 	Bucket       string `mapstructure:"bucket" json:"bucket" yaml:"bucket"`
+}
+
+func (o OssConf) Initialize(inConfig bool, parser *parser) error {
+	return nil
+}
+
+func (o OssConf) Destroy() error {
+	return nil
 }
 
 var dbMap = make(map[string]*gorm.DB)

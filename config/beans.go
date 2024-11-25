@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hyzx-go/common-b2c/log"
 	"github.com/hyzx-go/common-b2c/utils"
+	"os"
 )
 
 const (
@@ -51,6 +52,9 @@ func getBeanFactory(key string) BeanFactory {
 		return &MysqlList{}
 	case _defaultRedisKey:
 		return &RedisList{}
+		return &MysqlList{}
+	case _defaultOssKey:
+		return &OssConf{}
 	default:
 		log.GetLogger().Fatal(fmt.Sprintf("cannot find this key %s's beanFactory", key))
 	}
@@ -64,6 +68,13 @@ func (c *SystemConf) Initialize(inConfig bool, p *parser) error {
 
 	// set date time zone
 	utils.SetSystemDateTimeZone(c.TimeZone)
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return errors.New(fmt.Sprintf("sysConf Initialize get hostname error,hostname:%v", err.Error()))
+	}
+	p.systemConf.HostName = hostname
+	log.GetLogger().Info(fmt.Sprintf("sysConf Initialize successful hostname:%v", hostname))
 	return nil
 }
 
@@ -80,9 +91,9 @@ func (c *LogConf) Initialize(inConfig bool, p *parser) error {
 	log.InitLogger(log.Config{
 		EnableTerminalOutput: p.logConf.EnableTerminalOutput,
 		EnableGormOutput:     p.logConf.EnableGormOutput,
-		AppName:              p.systemConf.ServiceName,
-		Version:              p.systemConf.Version,
-		HostName:             p.systemConf.HostName,
+		//AppName:              p.systemConf.ServiceName,
+		//Version:              p.systemConf.Version,
+		//HostName:             p.systemConf.HostName,
 	})
 	return nil
 }
