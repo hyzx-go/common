@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis"
+	"github.com/gomodule/redigo/redis"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 	"path"
@@ -32,7 +32,7 @@ type Parser interface {
 	//GetHttpClientConf() *HttpClientConf
 
 	GetMysqlDnMap() (map[string]*gorm.DB, error)
-	GetRedisDbMap() (map[string]*redis.Conn, error)
+	GetRedisDbMap() (map[string]*redis.Pool, error)
 	//GetHTTPClient() rpc.Http
 	GetParserManager() *ParserManager
 }
@@ -51,7 +51,7 @@ type parser struct {
 	options    *Options
 	serverConf *ServerConf
 	mysqlDB    map[string]*gorm.DB
-	redisDB    map[string]*redis.Conn
+	redisDB    map[string]*redis.Pool
 
 	beanKeys []string
 	env      string
@@ -71,7 +71,7 @@ func (p *parser) GetMysqlDnMap() (map[string]*gorm.DB, error) {
 	return p.mysqlDB, nil
 }
 
-func (p *parser) GetRedisDbMap() (map[string]*redis.Conn, error) {
+func (p *parser) GetRedisDbMap() (map[string]*redis.Pool, error) {
 	if p.redisDB == nil || len(p.redisDB) == 0 {
 		return nil, ErrNotFind
 	}

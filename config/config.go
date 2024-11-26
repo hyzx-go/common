@@ -94,19 +94,9 @@ func (o OssConf) Destroy() error {
 	return nil
 }
 
-var dbMap = make(map[string]*gorm.DB)
+func (c *MysqlList) ConnsMysql() map[string]*gorm.DB {
+	var dbMap = make(map[string]*gorm.DB)
 
-func GetMysqlIns(insName string) *gorm.DB {
-
-	if ins, ok := dbMap[insName]; ok {
-		return ins
-	}
-
-	errInfo := "ERR: no such database：" + insName + ", please check conf name"
-	panic(errInfo)
-}
-
-func (c *MysqlList) InitMysql() {
 	for _, mysqlConfig := range c.List {
 		dsn := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8mb4&parseTime=True&loc=Local", mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Address, mysqlConfig.DbName)
 		conf := mysql.New(mysql.Config{
@@ -150,13 +140,13 @@ func (c *MysqlList) InitMysql() {
 
 		dbMap[mysqlConfig.InsName] = client
 	}
+
+	return dbMap
 }
 
-// 全局连接池
-var connPool = map[string]*redis.Pool{}
-
 // 注册 Redis 连接池
-func (r *RedisList) InitRedis() error {
+func (r *RedisList) InitRedis() (map[string]*redis.Pool, error) {
+	var connPool = map[string]*redis.Pool{}
 	for _, redisConf := range r.List {
 		// 初始化连接池
 		pool := redisConf.newRedisPool()
@@ -164,10 +154,10 @@ func (r *RedisList) InitRedis() error {
 
 		// 验证 Redis 连接是否正常
 		if err := redisConf.validateRedisConnection(); err != nil {
-			return fmt.Errorf("failed to register Redis instance [%s]: %w", redisConf.InsName, err)
+			return connPool, fmt.Errorf("failed to register Redis instance [%s]: %w", redisConf.InsName, err)
 		}
 	}
-	return nil
+	return connPool, nil
 }
 
 // 验证 Redis 连接是否正常
@@ -192,9 +182,15 @@ func GetRedisIns(options ...string) (redis.Conn, error) {
 	}
 
 	instanceName := options[0]
-	pool, ok := connPool[instanceName]
+	poolMap, err := GetParser().GetRedisDbMap()
+	if err != nil {
+		log.Ctx().Error("GetRedisIns  GetParser().GetRedisDbMap() err:", err)
+		return nil, err
+	}
+	pool, ok := poolMap[instanceName]
 	if !ok {
-		return nil, fmt.Errorf("redis client not exist for [%s]", instanceName)
+		log.Ctx().Error(fmt.Sprintf("GetRedisIns  instanceName not exist:%v", instanceName))
+		return nil, fmt.Errorf("GetRedisIns  instanceName not exist:[%s]", instanceName)
 	}
 
 	conn := pool.Get()

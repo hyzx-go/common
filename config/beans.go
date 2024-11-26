@@ -107,7 +107,7 @@ func (c MysqlList) Initialize(inConfig bool, p *parser) error {
 	}
 	p.mysqlConf = c
 
-	p.mysqlConf.InitMysql()
+	p.mysqlDB = p.mysqlConf.ConnsMysql()
 	return nil
 }
 func (c MysqlList) Destroy() error {
@@ -120,7 +120,11 @@ func (r RedisList) Initialize(inConfig bool, p *parser) error {
 	}
 
 	p.redisConf = r
-	err := p.redisConf.InitRedis()
+	rdsPools, err := p.redisConf.InitRedis()
+	if err != nil {
+		return err
+	}
+	p.redisDB = rdsPools
 	return err
 }
 
