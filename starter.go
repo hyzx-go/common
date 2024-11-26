@@ -62,8 +62,8 @@ type Service struct {
 	parser    config.Parser
 }
 
-func NewsStartService(applications ...ApplicationService) *Starter {
-	starter := &Starter{startTime: time.Now()}
+func NewsStartService(routers []func(r *gin.RouterGroup), applications ...ApplicationService) *Starter {
+	starter := &Starter{startTime: time.Now(), routers: routers}
 	if len(applications) > 0 {
 		starter.application = applications[0]
 	}
@@ -78,6 +78,7 @@ type Starter struct {
 	startTime   time.Time
 	configOpts  func() []config.Option
 	application ApplicationService
+	routers     []func(r *gin.RouterGroup)
 }
 
 var (
@@ -85,7 +86,7 @@ var (
 	afterInitializeConfigs  []func(p config.Parser) error
 )
 
-func (a *Starter) Start(routerModules []func(r *gin.RouterGroup)) {
+func (a *Starter) Start() {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -105,7 +106,7 @@ func (a *Starter) Start(routerModules []func(r *gin.RouterGroup)) {
 	service := a.Init()
 
 	// Run service
-	service.Run(routerModules)
+	service.Run(a.routers)
 }
 
 func (a *Starter) Init() ApplicationService {

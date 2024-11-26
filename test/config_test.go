@@ -28,5 +28,5 @@ func TestLoadConfig(t *testing.T) {
 		ProductModule,
 	}
 
-	initialize.BuildAppStarter().Start(modules)
+	initialize.BuildAppStarter(modules).Start()
 }
