@@ -220,6 +220,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 				redis.DialWriteTimeout(time.Duration(conf.WriteTimeout)*time.Millisecond),
 			)
 			if err != nil {
+				log.Ctx().Error("NewRedisPool err:", err)
 				return nil, fmt.Errorf("dial error: %w", err)
 			}
 
@@ -227,6 +228,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 			if conf.Auth != "" {
 				if _, err := conn.Do("AUTH", conf.Auth); err != nil {
 					conn.Close()
+					log.Ctx().Error("NewRedisPool err:", err)
 					return nil, fmt.Errorf("auth error: %w", err)
 				}
 			}
@@ -234,6 +236,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 			// 选择数据库
 			if _, err := conn.Do("SELECT", conf.Db); err != nil {
 				conn.Close()
+				log.Ctx().Error("NewRedisPool conn.Do err:", err)
 				return nil, fmt.Errorf("select db error: %w", err)
 			}
 
