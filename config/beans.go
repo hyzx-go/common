@@ -52,7 +52,6 @@ func getBeanFactory(key string) BeanFactory {
 		return &MysqlList{}
 	case _defaultRedisKey:
 		return &RedisList{}
-		return &MysqlList{}
 	case _defaultOssKey:
 		return &OssConf{}
 	default:
