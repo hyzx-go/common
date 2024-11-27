@@ -125,6 +125,6 @@ func MainTest(opts []config.Option, routers []func(r *gin.RouterGroup)) {
 	opts = append(opts, config.SetConfigFilePath(path))
 	config.NewParserManager(opts...).Initialize()
 
-	service := newDefaultApplication(time.Now())
-	service.Run(routers)
+	//service := newDefaultApplication(time.Now())
+	//service.Run(routers)
 }
