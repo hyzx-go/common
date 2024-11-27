@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hyzx-go/common-b2c/config"
 	innerLog "github.com/hyzx-go/common-b2c/log"
+	"github.com/hyzx-go/common-b2c/utils"
 	"log"
 	"time"
 )
@@ -111,4 +112,19 @@ func (a *Starter) Init() ApplicationService {
 	}
 
 	return service
+}
+
+// MainTest used this method start your test
+func MainTest(opts []config.Option, routers []func(r *gin.RouterGroup)) {
+
+	path, err := utils.LookUpFilePath("config.yaml", 8)
+	if err != nil {
+		return
+	}
+
+	opts = append(opts, config.SetConfigFilePath(path))
+	config.NewParserManager(opts...).Initialize()
+
+	service := newDefaultApplication(time.Now())
+	service.Run(routers)
 }
