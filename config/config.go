@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/hyzx-go/common-b2c/log"
+	"github.com/hyzx-go/common-b2c/rpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"net"
+	"net/http"
 	"time"
 )
 
@@ -75,6 +78,68 @@ type RedisConf struct {
 	MaxActive    int    `mapstructure:"max_active" json:"maxActive" yaml:"max_active"`
 	IsWait       bool   `mapstructure:"is_wait" json:"isWait" yaml:"is_wait"`
 	IdleTimeout  int    `mapstructure:"idle_timeout" json:"idleTimeout" yaml:"idle_timeout"`
+}
+
+type HttpClientConf struct {
+	Timeout               int     `mapstructure:"timeout" json:"timeout" yaml:"timeout"`
+	Dialer                *Dialer `mapstructure:"dialer" json:"dialer" yaml:"dialer"`
+	DisableKeepAlives     bool    `mapstructure:"disableKeepAlives" json:"username" yaml:"username"`
+	DisableCompression    bool    `mapstructure:"disableCompression" json:"disableCompression" yaml:"disableCompression"`
+	MaxIdleConns          int     `mapstructure:"maxIdleConns" json:"maxIdleConns" yaml:"maxIdleConns"`
+	MaxIdleConnsPerHost   int     `mapstructure:"maxIdleConnsPerHost" json:"maxIdleConnsPerHost" yaml:"maxIdleConnsPerHost"`
+	IdleConnTimeout       int     `mapstructure:"idleConnTimeout" json:"idleConnTimeout" yaml:"idleConnTimeout"`
+	ResponseHeaderTimeout int     `mapstructure:"responseHeaderTimeout" json:"responseHeaderTimeout" yaml:"responseHeaderTimeout"`
+}
+
+func (h *HttpClientConf) Initialize(inConfig bool, p *parser) error {
+
+	p.httpClientConf = h
+	if !inConfig {
+		p.httpClientConf = &HttpClientConf{
+			DisableKeepAlives:  false,
+			DisableCompression: true,
+		}
+	}
+
+	if p.httpClientConf.Dialer == nil {
+		p.httpClientConf.Dialer = &Dialer{
+			Timeout:   30,
+			KeepAlive: 30,
+		}
+	}
+
+	if p.httpClientConf.MaxIdleConns == 0 {
+		p.httpClientConf.MaxIdleConns = 10
+	}
+
+	if p.httpClientConf.MaxIdleConnsPerHost == 0 {
+		p.httpClientConf.MaxIdleConnsPerHost = 10
+	}
+
+	if p.httpClientConf.IdleConnTimeout == 0 {
+		p.httpClientConf.IdleConnTimeout = 120
+	}
+
+	if p.httpClientConf.ResponseHeaderTimeout == 0 {
+		p.httpClientConf.ResponseHeaderTimeout = 30
+	}
+
+	if p.httpClientConf.Timeout == 0 {
+		p.httpClientConf.Timeout = 30
+	}
+
+	p.httpClient = p.httpClientConf.Connect()
+	return nil
+}
+
+func (h *HttpClientConf) Destroy() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+type Dialer struct {
+	Timeout   int `mapstructure:"timeout" json:"timeout" yaml:"timeout"`
+	KeepAlive int `mapstructure:"keepAlive" json:"keepAlive" yaml:"keepAlive"`
 }
 
 type OssConf struct {
@@ -184,12 +249,12 @@ func GetRedisIns(options ...string) (redis.Conn, error) {
 	instanceName := options[0]
 	poolMap, err := GetParser().GetRedisDbMap()
 	if err != nil {
-		log.Ctx().Error("GetRedisIns  GetParser().GetRedisDbMap() err:", err)
+		log.Ctx(nil).Error("GetRedisIns  GetParser().GetRedisDbMap() err:", err)
 		return nil, err
 	}
 	pool, ok := poolMap[instanceName]
 	if !ok {
-		log.Ctx().Error(fmt.Sprintf("GetRedisIns  instanceName not exist:%v", instanceName))
+		log.Ctx(nil).Error(fmt.Sprintf("GetRedisIns  instanceName not exist:%v", instanceName))
 		return nil, fmt.Errorf("GetRedisIns  instanceName not exist:[%s]", instanceName)
 	}
 
@@ -220,7 +285,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 				redis.DialWriteTimeout(time.Duration(conf.WriteTimeout)*time.Millisecond),
 			)
 			if err != nil {
-				log.Ctx().Error("NewRedisPool err:", err)
+				log.Ctx(nil).Error("NewRedisPool err:", err)
 				return nil, fmt.Errorf("dial error: %w", err)
 			}
 
@@ -228,7 +293,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 			if conf.Auth != "" {
 				if _, err := conn.Do("AUTH", conf.Auth); err != nil {
 					conn.Close()
-					log.Ctx().Error("NewRedisPool err:", err)
+					log.Ctx(nil).Error("NewRedisPool err:", err)
 					return nil, fmt.Errorf("auth error: %w", err)
 				}
 			}
@@ -236,7 +301,7 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 			// 选择数据库
 			if _, err := conn.Do("SELECT", conf.Db); err != nil {
 				conn.Close()
-				log.Ctx().Error("NewRedisPool conn.Do err:", err)
+				log.Ctx(nil).Error("NewRedisPool conn.Do err:", err)
 				return nil, fmt.Errorf("select db error: %w", err)
 			}
 
@@ -247,4 +312,31 @@ func (conf *RedisConf) newRedisPool() *redis.Pool {
 			return err // 不再 panic，而是返回错误
 		},
 	}
+}
+
+func (h *HttpClientConf) Connect() rpc.Http {
+	dialer := &net.Dialer{
+		// 建立TCP连接的时间
+		Timeout: time.Duration(h.Dialer.Timeout) * time.Second,
+		// 保持活跃的时间 默认15秒
+		KeepAlive: time.Duration(h.Dialer.KeepAlive) * time.Second,
+	}
+
+	return rpc.NewHttpClient(&http.Client{
+		// 设置超时时间
+		Timeout: time.Duration(h.Timeout) * time.Second,
+		Transport: &http.Transport{
+			DialContext:        dialer.DialContext,
+			DisableKeepAlives:  h.DisableKeepAlives,
+			DisableCompression: h.DisableCompression,
+			// 所有host的连接池最大连接数量
+			MaxIdleConns: h.MaxIdleConns,
+			// 每个host的连接池最大空闲连接数
+			MaxIdleConnsPerHost: h.MaxIdleConnsPerHost,
+			// 空闲连接在连接池中保留多长时间
+			IdleConnTimeout: time.Duration(h.IdleConnTimeout) * time.Second,
+			// 读取response header的时间,默认 timeout + 5*time.Second
+			ResponseHeaderTimeout: time.Duration(h.ResponseHeaderTimeout) * time.Second,
+		},
+	})
 }

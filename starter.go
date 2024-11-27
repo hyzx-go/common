@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/hyzx-go/common-b2c/config"
+	innerLog "github.com/hyzx-go/common-b2c/log"
 	"log"
 	"time"
 )
@@ -25,11 +26,6 @@ func newMicroService(startTime time.Time) *Service {
 		panic(err)
 	}
 
-	//mc, err := service.parser.GetSystemConf()
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	log.Printf(fmt.Sprintf("Load micro service env:%s,serviceName:%s,local:%s,timeZone:%s", service.parser.GetEnv(), sys.ServiceName, sys.Local, sys.TimeZone))
 
 	return service
@@ -39,9 +35,8 @@ func (s *Service) Run(routerModules []func(r *gin.RouterGroup)) {
 	// 创建 Gin 实例
 	r := gin.New()
 
-	// 注册路由
 	// 注册模块路由
-	group := r.Group("")
+	group := r.Group("", innerLog.RequestLogger(), innerLog.GinRecovery())
 	for _, module := range routerModules {
 		module(group)
 	}
@@ -97,12 +92,7 @@ func (a *Starter) Start() {
 	// Logger Output defines the standard output of the print functions. By default, os.Stdout
 	config.Cyan(banner)
 	config.Blue(version)
-	//if a.configOpts == nil {
-	//	config.Red("Cannot find server config, please check configs \n")
-	//	panic("please setting configs ")
-	//}
 
-	// Initialise configs and new application service
 	service := a.Init()
 
 	// Run service

@@ -6,18 +6,15 @@ import (
 
 // Config defines the configuration for the logger.
 type Config struct {
-	DefaultConf
+	*DefaultConf
 	EnableTerminalOutput bool
 	EnableGormOutput     bool
-	AppName              string
-	Version              string
-	HostName             string
 }
 
 type DefaultConf struct {
 	LogLevel         logrus.Level // Logging level
-	LogFileDir       string       // Log file path
-	LogFilePath      string       // Log file path
+	Dir              string       // Log file path
+	File             string       // Log file path
 	MaxSize          int          // Maximum size of a log file (in MB)
 	MaxBackups       int          // Maximum number of backup files
 	MaxAge           int          // Maximum age of a log file (in days)
@@ -27,11 +24,11 @@ type DefaultConf struct {
 }
 
 // DefaultConfig returns a default configuration for the logger.
-func DefaultConfig() DefaultConf {
-	return DefaultConf{
+func DefaultConfig() *DefaultConf {
+	return &DefaultConf{
 		LogLevel:         logrus.DebugLevel,
-		LogFileDir:       "./logs",
-		LogFilePath:      "./logs/app.log",
+		Dir:              "./logs",
+		File:             "app.log",
 		MaxSize:          10,
 		MaxBackups:       5,
 		MaxAge:           30,

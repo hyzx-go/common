@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	"github.com/hyzx-go/common-b2c/rpc"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 	"path"
@@ -29,11 +30,11 @@ type Parser interface {
 	//GetErrorMsg(code string) string
 	GetSystemConf() (*SystemConf, error)
 	GetLogConf() (*LogConf, error)
-	//GetHttpClientConf() *HttpClientConf
+	GetHttpClientConf() *HttpClientConf
 
 	GetMysqlDnMap() (map[string]*gorm.DB, error)
 	GetRedisDbMap() (map[string]*redis.Pool, error)
-	//GetHTTPClient() rpc.Http
+	GetHTTPClient() rpc.Http
 	GetParserManager() *ParserManager
 }
 type ParserManager struct {
@@ -52,16 +53,25 @@ type parser struct {
 	serverConf *ServerConf
 	mysqlDB    map[string]*gorm.DB
 	redisDB    map[string]*redis.Pool
+	httpClient rpc.Http
 
 	beanKeys []string
 	env      string
 
-	factoryBeans []BeanFactory
-	systemConf   *SystemConf
-	logConf      *LogConf
-	mysqlConf    MysqlList
-	redisConf    RedisList
-	//httpClientConf *HttpClientConf
+	factoryBeans   []BeanFactory
+	systemConf     *SystemConf
+	logConf        *LogConf
+	mysqlConf      MysqlList
+	redisConf      RedisList
+	httpClientConf *HttpClientConf
+}
+
+func (p *parser) GetHTTPClient() rpc.Http {
+	return p.httpClient
+}
+
+func (p *parser) GetHttpClientConf() *HttpClientConf {
+	return p.httpClientConf
 }
 
 func (p *parser) GetMysqlDnMap() (map[string]*gorm.DB, error) {

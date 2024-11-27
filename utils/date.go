@@ -275,3 +275,15 @@ func ConvertBuddhistCalendar(t *time.Time) (*time.Time, error) {
 
 	return &parse, nil
 }
+
+func IctTime() (time.Time, error) {
+	// 获取泰国时区
+	location, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return time.Now(), err
+	}
+
+	// 获取当前时间（泰国时区）
+	now := time.Now().In(location)
+	return now, nil
+}

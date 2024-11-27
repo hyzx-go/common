@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"errors"
 	log2 "github.com/hyzx-go/common-b2c/log"
 	"testing"
@@ -13,9 +14,6 @@ func TestLogging(t *testing.T) {
 		DefaultConf:          log2.DefaultConfig(),
 		EnableTerminalOutput: false,
 		EnableGormOutput:     false,
-		AppName:              "1.1.1",
-		Version:              "2.2.2",
-		HostName:             "3.3.3",
 	})
 
 	log := log2.GetLogger()
@@ -25,6 +23,13 @@ func TestLogging(t *testing.T) {
 	log.Warn("This is a warning")
 	log.WithError(errors.New("all err")).Error("An error occurred")
 
-	log2.Ctx().Info("main err:", "lalalaallalalalla")
+	log2.Ctx(nil).Info("main err:", "lalalaallalalalla")
 	time.Sleep(10)
+}
+
+func TestCtx(t *testing.T) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, log2.TraceId, "9999999999888888888")
+	logW := log2.Ctx(ctx)
+	logW.Info("1111", 222)
 }

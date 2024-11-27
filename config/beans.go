@@ -3,18 +3,11 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/hyzx-go/common-b2c/global"
 	"github.com/hyzx-go/common-b2c/log"
 	"github.com/hyzx-go/common-b2c/utils"
+	"github.com/sirupsen/logrus"
 	"os"
-)
-
-const (
-	_defaultLogKey    = "log"
-	_defaultMysqlKey  = "mysql"
-	_defaultRedisKey  = "redis"
-	_defaultSystemKey = "system"
-	_defaultOssKey    = "oss"
-	//_defaultHttpClientKey = "httpClient"
 )
 
 var (
@@ -33,15 +26,26 @@ type BeanFactory interface {
 	Destroy() error
 }
 
+const (
+	_defaultLogKey        = "log"
+	_defaultMysqlKey      = "mysql"
+	_defaultRedisKey      = "redis"
+	_defaultSystemKey     = "system"
+	_defaultOssKey        = "oss"
+	_defaultHttpClientKey = "httpClient"
+)
+
 func (p *parser) initBeanKeys() {
 	p.beanKeys = []string{
+		_defaultSystemKey,
 		_defaultLogKey,
 		_defaultMysqlKey,
 		_defaultRedisKey,
-		_defaultSystemKey,
+		_defaultHttpClientKey,
 		_defaultOssKey,
 	}
 }
+
 func getBeanFactory(key string) BeanFactory {
 	switch key {
 	case _defaultSystemKey:
@@ -54,11 +58,14 @@ func getBeanFactory(key string) BeanFactory {
 		return &RedisList{}
 	case _defaultOssKey:
 		return &OssConf{}
+	case _defaultHttpClientKey:
+		return &HttpClientConf{}
 	default:
-		log.GetLogger().Fatal(fmt.Sprintf("cannot find this key %s's beanFactory", key))
+		log.GetLogger().Error(fmt.Sprintf("cannot find this key %s's beanFactory", key))
 	}
 	return nil
 }
+
 func (c *SystemConf) Initialize(inConfig bool, p *parser) error {
 	if !inConfig {
 		panic(errors.New("please check system config"))
@@ -70,10 +77,18 @@ func (c *SystemConf) Initialize(inConfig bool, p *parser) error {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		return errors.New(fmt.Sprintf("sysConf Initialize get hostname error,hostname:%v", err.Error()))
+		log.Ctx(nil).Error(fmt.Sprintf("system config initialize get hostname:%s", hostname), err)
+		return errors.New(fmt.Sprintf("system config initialize get hostname err:%s", err.Error()))
 	}
 	p.systemConf.HostName = hostname
-	log.GetLogger().Info(fmt.Sprintf("sysConf Initialize successful hostname:%v", hostname))
+	log.Ctx(nil).Info(fmt.Sprintf("system config initialize successful :%v", p.systemConf))
+
+	global.LogPreInfo = logrus.Fields{
+		"app_name":  p.systemConf.ServiceName,
+		"version":   p.systemConf.Version,
+		"host_name": p.systemConf.HostName,
+	}
+
 	return nil
 }
 
@@ -90,9 +105,6 @@ func (c *LogConf) Initialize(inConfig bool, p *parser) error {
 	log.InitLogger(log.Config{
 		EnableTerminalOutput: p.logConf.EnableTerminalOutput,
 		EnableGormOutput:     p.logConf.EnableGormOutput,
-		//AppName:              p.systemConf.ServiceName,
-		//Version:              p.systemConf.Version,
-		//HostName:             p.systemConf.HostName,
 	})
 	return nil
 }
@@ -101,25 +113,25 @@ func (c *LogConf) Destroy() error {
 	return nil
 }
 
-func (c MysqlList) Initialize(inConfig bool, p *parser) error {
+func (c *MysqlList) Initialize(inConfig bool, p *parser) error {
 	if !inConfig {
 		return nil
 	}
-	p.mysqlConf = c
+	p.mysqlConf = *c
 
 	p.mysqlDB = p.mysqlConf.ConnsMysql()
 	return nil
 }
-func (c MysqlList) Destroy() error {
+func (c *MysqlList) Destroy() error {
 	return nil
 }
 
-func (r RedisList) Initialize(inConfig bool, p *parser) error {
+func (r *RedisList) Initialize(inConfig bool, p *parser) error {
 	if !inConfig {
 		return nil
 	}
 
-	p.redisConf = r
+	p.redisConf = *r
 	rdsPools, err := p.redisConf.InitRedis()
 	if err != nil {
 		return err
@@ -128,7 +140,7 @@ func (r RedisList) Initialize(inConfig bool, p *parser) error {
 	return err
 }
 
-func (r RedisList) Destroy() error {
+func (r *RedisList) Destroy() error {
 	for _, item := range r.List {
 		client, err := GetRedisIns(item.InsName)
 		if err != nil {

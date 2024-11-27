@@ -1,8 +1,8 @@
 package log
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/hyzx-go/common-b2c/utils"
+	"context"
+	"github.com/hyzx-go/common-b2c/global"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -10,6 +10,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
+)
+
+const (
+	TraceId = "trace-id"
 )
 
 var (
@@ -27,48 +31,74 @@ func GetLogger() *logrus.Entry {
 
 // logWrapper 结构体用于封装日志相关的方法
 type logWrapper struct {
-	log     *logrus.Logger
-	ctx     *gin.Context
+	log     *logrus.Entry
+	ctx     context.Context
 	traceId string
 }
 
 // Ctx 创建一个新的 logWrapper 实例
-func Ctx(ctx ...*gin.Context) *logWrapper {
-	// 如果传入了 gin.Context，则使用第一个，否则使用 nil
-	interiorCtx := (func() *gin.Context {
-		if len(ctx) > 0 && ctx[0] != nil {
-			return ctx[0]
-		}
-		return &gin.Context{}
-	})()
-
-	return &logWrapper{
-		log:     logger,
-		ctx:     interiorCtx,
-		traceId: utils.GetTraceId(interiorCtx),
+func Ctx(ctx context.Context) *logWrapper {
+	if logger == nil {
+		InitLogger(Config{DefaultConf: DefaultConfig()})
 	}
+
+	if ctx == nil {
+		return &logWrapper{log: logrus.NewEntry(logger)}
+	}
+
+	traceId := ctx.Value(TraceId)
+	if traceId == nil {
+		traceId = "unknown"
+	}
+	return &logWrapper{log: logrus.NewEntry(logger), ctx: ctx, traceId: traceId.(string)}
 }
 
 // InitLogger initializes the logger with the provided configuration.
 func InitLogger(config Config) {
-	config.DefaultConf = DefaultConfig()
+	defaultConf := DefaultConfig()
+	if config.DefaultConf == nil {
+		config.DefaultConf = defaultConf
+	} else {
+		// 仅在当前配置为空时才使用默认值
+		if config.DefaultConf.Dir == "" {
+			config.DefaultConf.Dir = defaultConf.Dir
+		}
+		if config.DefaultConf.File == "" {
+			config.DefaultConf.File = defaultConf.File
+		}
+
+		if config.LogLevel < logrus.DebugLevel {
+			config.LogLevel = logrus.DebugLevel
+		}
+
+		if config.MaxSize == 0 {
+			config.MaxSize = defaultConf.MaxSize
+		}
+		if config.MaxBackups == 0 {
+			config.MaxBackups = defaultConf.MaxBackups
+		}
+		if config.MaxAge == 0 {
+			config.MaxAge = defaultConf.MaxAge
+		}
+	}
+
 	once.Do(func() {
 		// 检查并创建日志目录
-		if err := os.MkdirAll(config.LogFileDir, 0755); err != nil {
+		if err := os.MkdirAll(config.Dir, 0755); err != nil {
 			logger.Fatal("Failed to create log directory:", err)
 		}
 
 		logger = logrus.New()
 
 		// 设置日志级别
-		logger.SetLevel(logrus.DebugLevel)
+		logger.SetLevel(config.LogLevel)
 
 		// 启用 ReportCaller 以显示文件名和行号
-		logger.SetReportCaller(true)
+		logger.SetReportCaller(config.ReportCaller)
 
 		// 配置滚动日志文件
 		jsonLogFile := &lumberjack.Logger{
-			Filename:   config.LogFilePath,
+			Filename:   config.Dir + "/" + config.File,
 			MaxSize:    config.MaxSize,
 			MaxBackups: config.MaxBackups,
 			MaxAge:     config.MaxAge,
@@ -78,11 +108,7 @@ func InitLogger(config Config) {
 		// 配置文本格式和 JSON 格式的 Hook
 		hook := &jSONAndTextFormatterHook{
 			// 添加全局字段
-			fields: logrus.Fields{
-				"app_name":  config.AppName,
-				"version":   config.Version,
-				"host_name": config.HostName,
-			},
+			fields:     global.LogPreInfo,
 			JSONWriter: jsonLogFile,
 			JSONFormat: &OrderedJSONFormatter{
 				TimestampFormat: time.RFC3339,
