@@ -11,7 +11,7 @@ type Response struct {
 }
 
 // 成功响应
-func SuccessResp(ctx *gin.Context, data interface{}) {
+func SuccessOk(ctx *gin.Context, data interface{}) {
 	ctx.JSON(200, Response{
 		Code:       Success,
 		Module:     "General",
