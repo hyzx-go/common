@@ -1,4 +1,4 @@
-package resp
+package response
 
 // 定义 Lang 类型
 type Lang string
