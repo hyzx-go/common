@@ -27,6 +27,8 @@ const (
 	PermissionError     ErrorCode = 904 // 权限不足
 	ResourceExists      ErrorCode = 905 // 资源已存在
 	OperationFailed     ErrorCode = 906 // 操作失败
+
+	StandError ErrorCode = 999
 )
 
 // 用户模块错误码 (01)
@@ -34,27 +36,39 @@ const (
 	UserNotFound ErrorCode = 10001 // 用户未找到
 )
 
-type ErrorCodeType string
+type ErrorCodeModule uint
 
 const (
-	ErrorCodeTypeGeneral ErrorCodeType = "General"
-	ErrorCodeTypeUser    ErrorCodeType = "User"
-	ErrorCodeUnknown     ErrorCodeType = "Unknown"
+	ErrorModuleGeneral ErrorCodeModule = 1 //"General"
+	ErrorModuleUser    ErrorCodeModule = 2 //"User"
+	ErrorModuleUnknown ErrorCodeModule = 3 //"Unknown"
 )
 
+func (e ErrorCodeModule) String() string {
+	switch e {
+	case ErrorModuleGeneral:
+		return "General"
+	case ErrorModuleUser:
+		return "UserModule"
+	case ErrorModuleUnknown:
+		return "Unknown"
+	}
+	return "Unknown"
+}
+
 // 解析错误码所属模块
-func ParseErrorCode(code ErrorCode) (module ErrorCodeType, detailCode int) {
+func ParseErrorCode(code ErrorCode) (module ErrorCodeModule, detailCode int) {
 	codeStr := fmt.Sprintf("%06d", code) // 保证长度一致
 	moduleCode := codeStr[:2]            // 取前两位模块编号
 	detailCode = int(code) % 100000      // 剩下部分为详细错误码
 
 	switch moduleCode {
 	case "00":
-		module = ErrorCodeTypeGeneral
+		module = ErrorModuleGeneral
 	case "01":
-		module = ErrorCodeTypeUser
+		module = ErrorModuleUser
 	default:
-		module = ErrorCodeUnknown
+		module = ErrorModuleUnknown
 	}
 	return
 }

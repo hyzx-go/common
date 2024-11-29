@@ -1,39 +1,97 @@
 package resp
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/hyzx-go/common-b2c/utils"
+	"io"
+	"net/http"
+)
 
 type Response struct {
-	Code       ErrorCode     `json:"code"`
-	Module     ErrorCodeType `json:"module"`
-	DetailCode int           `json:"detail_code"`
-	Message    string        `json:"message"`
-	Data       interface{}   `json:"data,omitempty"`
+	TraceId    string          `json:"trace-id"`
+	Code       ErrorCode       `json:"code"`
+	Module     ErrorCodeModule `json:"module"`
+	DetailCode int             `json:"detail_code"`
+	Message    string          `json:"message"`
+	Data       interface{}     `json:"data,omitempty"`
 }
 
-// 成功响应
-func OkResponse(ctx *gin.Context, data interface{}) {
-	ctx.JSON(200, Response{
-		Code:       Success,
-		Module:     "General",
-		DetailCode: 0,
-		Message:    GetErrorMessage(Success, ctx.GetHeader("Accept-Language")),
+func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
+	if c.IsAborted() {
+		return
+	}
+	module, DetailCode := ParseErrorCode(code)
+	// 开始时间
+	response := Response{
+		Code:       code,
+		Module:     module,
+		DetailCode: DetailCode,
+		Message:    msg,
 		Data:       data,
-	})
+	}
+	c.JSON(http.StatusOK, response)
+	c.Abort()
 }
 
-func ErrorResp(ctx *gin.Context, code ErrorCode, err error) {
-	langRes := ctx.GetHeader("Accept-Language")
+func ErrorResp(code ErrorCode, err error, c *gin.Context) {
+	if c.IsAborted() {
+		return
+	}
+
+	langRes := c.GetHeader("Accept-Language")
 	if langRes == "" {
 		langRes = En.String()
 	}
 
 	module, detailCode := ParseErrorCode(code)
 
-	ctx.JSON(200, Response{
+	c.JSON(http.StatusOK, Response{
+		TraceId:    utils.GetTraceId(c),
 		Code:       code,
 		Module:     module,
 		DetailCode: detailCode,
 		Message:    GetErrorMessage(code, langRes),
 		Data:       err.Error(),
 	})
+}
+
+// 成功响应
+func OkResponse(c *gin.Context, data interface{}) {
+	module, DetailCode := ParseErrorCode(Success)
+	c.JSON(http.StatusOK, Response{
+		Code:       Success,
+		Module:     module,
+		DetailCode: DetailCode,
+		Message:    GetErrorMessage(Success, c.GetHeader("Accept-Language")),
+		Data:       data,
+	})
+}
+
+func FileResp(c *gin.Context, filename string, length int, reader io.Reader) {
+	if c.IsAborted() {
+		return
+	}
+	headers := make(map[string]string)
+	headers["content-disposition"] = "attachment; filename=\"" + filename + "\""
+	c.DataFromReader(http.StatusOK, int64(length), "application/octet-stream", reader, headers)
+	c.Abort()
+}
+
+func OkWithMessage(message string, c *gin.Context) {
+	Resp(Success, map[string]interface{}{}, message, c)
+}
+func OkWithData(data interface{}, c *gin.Context) {
+	Resp(Success, data, "SUCCESS", c)
+}
+func OkDetailed(data interface{}, message string, c *gin.Context) {
+	Resp(Success, data, message, c)
+}
+func FailWithMessage(message string, c *gin.Context) {
+	Resp(StandError, map[string]interface{}{}, message, c)
+}
+func FailWithDetailed(code ErrorCode, data interface{}, message string, c *gin.Context) {
+	Resp(code, data, message, c)
+}
+func FailWithCodeMsg(code ErrorCode, message string, c *gin.Context) {
+	Resp(code, "", message, c)
 }
