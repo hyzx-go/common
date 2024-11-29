@@ -33,7 +33,7 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	c.Abort()
 }
 
-func ErrorResp(code ErrorCode, err error, c *gin.Context) {
+func Fail(code ErrorCode, err error, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
@@ -56,7 +56,7 @@ func ErrorResp(code ErrorCode, err error, c *gin.Context) {
 }
 
 // 成功响应
-func OkResponse(c *gin.Context, data interface{}) {
+func Ok(data interface{}, c *gin.Context) {
 	module, DetailCode := ParseErrorCode(Success)
 	c.JSON(http.StatusOK, Response{
 		Code:       Success,
@@ -67,7 +67,7 @@ func OkResponse(c *gin.Context, data interface{}) {
 	})
 }
 
-func FileResp(c *gin.Context, filename string, length int, reader io.Reader) {
+func File(filename string, length int, reader io.Reader, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
