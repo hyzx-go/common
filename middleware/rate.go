@@ -17,8 +17,8 @@ type ipLimiter struct {
 var (
 	limiterStore = make(map[string]*ipLimiter) // 存储每个 IP 的限流器
 	storeMutex   sync.Mutex                    // 保护共享数据的互斥锁
-	rateLimit    = rate.Limit(5)               // 每秒允许的请求数
-	burstLimit   = 10                          // 令牌桶的容量
+	rateLimit    = rate.Limit(10)              // 每秒允许的请求数
+	burstLimit   = 15                          // 令牌桶的容量
 	expireAfter  = 5 * time.Minute             // 限流器过期时间
 )
 
