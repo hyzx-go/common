@@ -74,7 +74,7 @@ func ParseErrorCode(code ErrorCode) (module ErrorCodeModule, detailCode int) {
 }
 
 // 错误码多语言映射
-var langMap = map[string]map[ErrorCode]string{
+var langMap = map[Lang]map[ErrorCode]string{
 	"en": {
 		Success:             "Success",
 		BadRequest:          "Invalid request parameters",
@@ -112,11 +112,21 @@ var langMap = map[string]map[ErrorCode]string{
 }
 
 // 获取错误信息
-func GetErrorMessage(code ErrorCode, lang string) string {
+// 获取错误信息
+func GetErrorMessage(code ErrorCode, lang Lang) string {
+	defaultLang := En // 设置默认语言
 	if messages, exists := langMap[lang]; exists {
 		if msg, found := messages[code]; found {
 			return msg
 		}
 	}
-	return "Unknown error"
+
+	// 尝试使用默认语言
+	if messages, exists := langMap[defaultLang]; exists {
+		if msg, found := messages[code]; found {
+			return msg
+		}
+	}
+
+	return "Unknown code"
 }

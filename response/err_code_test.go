@@ -3,7 +3,7 @@ package response
 import "testing"
 
 func TestParseErr(t *testing.T) {
-	errCode1 := BadRequest
+	errCode1 := Success
 	errCode2 := UserNotFound
 
 	module1, code1 := ParseErrorCode(errCode1)

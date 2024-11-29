@@ -37,12 +37,6 @@ func Fail(code ErrorCode, err error, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
-
-	langRes := c.GetHeader("Accept-Language")
-	if langRes == "" {
-		langRes = En.String()
-	}
-
 	module, detailCode := ParseErrorCode(code)
 
 	c.JSON(http.StatusOK, Response{
@@ -50,7 +44,7 @@ func Fail(code ErrorCode, err error, c *gin.Context) {
 		Code:       code,
 		Module:     module,
 		DetailCode: detailCode,
-		Message:    GetErrorMessage(code, langRes),
+		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
 		Data:       err.Error(),
 	})
 }
@@ -62,7 +56,7 @@ func Ok(data interface{}, c *gin.Context) {
 		Code:       Success,
 		Module:     module,
 		DetailCode: DetailCode,
-		Message:    GetErrorMessage(Success, c.GetHeader("Accept-Language")),
+		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
 		Data:       data,
 	})
 }
