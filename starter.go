@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hyzx-go/common-b2c/config"
 	innerLog "github.com/hyzx-go/common-b2c/log"
+	middlewares "github.com/hyzx-go/common-b2c/middleware"
 	"github.com/hyzx-go/common-b2c/utils"
 	"log"
 	"time"
@@ -37,7 +38,8 @@ func (s *Service) Run(routerModules []func(r *gin.RouterGroup)) {
 	r := gin.New()
 
 	// 注册模块路由
-	group := r.Group("", innerLog.RequestLogger(), innerLog.GinRecovery())
+	group := r.Group("", middlewares.RateLimitMiddleware(),
+		innerLog.RequestLogger(), innerLog.GinRecovery())
 	for _, module := range routerModules {
 		module(group)
 	}

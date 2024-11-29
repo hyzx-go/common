@@ -8,12 +8,12 @@ import (
 )
 
 type Response struct {
-	TraceId    string          `json:"trace-id"`
-	Code       ErrorCode       `json:"code"`
-	Module     ErrorCodeModule `json:"module"`
-	DetailCode int             `json:"detail_code"`
-	Message    string          `json:"message"`
-	Data       interface{}     `json:"data,omitempty"`
+	TraceId    string      `json:"trace-id"`
+	Code       ErrorCode   `json:"code"`
+	Module     string      `json:"module"`
+	DetailCode int         `json:"detail_code"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data,omitempty"`
 }
 
 func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
@@ -24,7 +24,7 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	// 开始时间
 	response := Response{
 		Code:       code,
-		Module:     module,
+		Module:     module.String(),
 		DetailCode: DetailCode,
 		Message:    msg,
 		Data:       data,
@@ -42,7 +42,7 @@ func Fail(code ErrorCode, err error, c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
 		TraceId:    utils.GetTraceId(c),
 		Code:       code,
-		Module:     module,
+		Module:     module.String(),
 		DetailCode: detailCode,
 		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
 		Data:       err.Error(),
@@ -54,7 +54,7 @@ func Ok(data interface{}, c *gin.Context) {
 	module, DetailCode := ParseErrorCode(Success)
 	c.JSON(http.StatusOK, Response{
 		Code:       Success,
-		Module:     module,
+		Module:     module.String(),
 		DetailCode: DetailCode,
 		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
 		Data:       data,
