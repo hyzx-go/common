@@ -1,11 +1,13 @@
 package common_b2c
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/hyzx-go/common-b2c/config"
 	innerLog "github.com/hyzx-go/common-b2c/log"
 	middlewares "github.com/hyzx-go/common-b2c/middleware"
+	"github.com/hyzx-go/common-b2c/pool"
 	"github.com/hyzx-go/common-b2c/utils"
 	"log"
 	"time"
@@ -36,6 +38,15 @@ func newMicroService(startTime time.Time) *Service {
 func (s *Service) Run(routerModules []func(r *gin.RouterGroup)) {
 	// 创建 Gin 实例
 	r := gin.New()
+
+	// 创建协程池，最大协程数为 5
+	ctx := context.Background()
+	goroutinePool := pool.NewGoroutinePool(ctx, 5)
+	// 服务器退出时优雅关闭协程池
+	defer goroutinePool.Shutdown()
+
+	// 添加中间件
+	r.Use(middlewares.PoolMiddleware(goroutinePool))
 
 	// 注册模块路由
 	group := r.Group("", middlewares.RateLimitMiddleware(),
