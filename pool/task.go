@@ -1,27 +1,40 @@
 package pool
 
 import (
-	"errors"
 	"log"
-	"math/rand"
+	"time"
 )
 
-// ExampleTask 示例任务结构
-type ExampleTask struct {
-	Name string
+// Task 定义一个任务及其重试逻辑
+type Task struct {
+	fn        func() error
+	retry     int
+	retryWait time.Duration
 }
 
-// Run 执行任务逻辑
-func (e *ExampleTask) Run() error {
-	log.Printf("Executing task: %s", e.Name)
-	// 模拟成功或失败
-	if rand.Intn(2) == 0 {
-		return errors.New("simulated task error")
+// NewTask 创建任务
+func NewTask(fn func() error, retry int, retryWait time.Duration) *Task {
+	return &Task{
+		fn:        fn,
+		retry:     retry,
+		retryWait: retryWait,
 	}
-	return nil
 }
 
-// NewExampleTask 创建一个新的 ExampleTask
-func NewExampleTask(name string) *ExampleTask {
-	return &ExampleTask{Name: name}
+// Run 执行任务并处理重试逻辑
+func (t *Task) Run() {
+	for {
+		err := t.fn()
+		if err != nil && t.retry > 0 {
+			t.retry--
+			log.Printf("Task failed, retrying in %s... (%d retries left)\n", t.retryWait, t.retry)
+			time.Sleep(t.retryWait)
+			t.retryWait *= 2 // 指数退避策略
+		} else {
+			if err != nil {
+				log.Printf("Task failed permanently: %v\n", err)
+			}
+			break
+		}
+	}
 }

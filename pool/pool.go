@@ -2,95 +2,80 @@ package pool
 
 import (
 	"log"
-	"runtime/debug"
 	"sync"
-	"time"
 )
-
-// Task 定义任务接口
-type Task interface {
-	Run() error
-}
-
-// RetryTask 包含重试机制的任务结构
-type RetryTask struct {
-	Task       Task
-	RetryCount int
-	RetryDelay time.Duration
-}
 
 // GoroutinePool 线程池结构
 type GoroutinePool struct {
-	taskQueue   chan *RetryTask
+	workerCount int
+	taskQueue   chan *Task
 	wg          sync.WaitGroup
-	closeSignal chan struct{}
+	stopChan    chan struct{}
 }
 
-// NewGoroutinePool 创建 GoroutinePool
-func NewGoroutinePool(workerCount, taskQueueSize int) *GoroutinePool {
-	pool := &GoroutinePool{
-		taskQueue:   make(chan *RetryTask, taskQueueSize),
-		closeSignal: make(chan struct{}),
-	}
+var (
+	poolInstance *GoroutinePool
+	once         sync.Once
+)
 
-	// 启动 worker
-	for i := 0; i < workerCount; i++ {
-		go pool.worker()
+// NewGoroutinePool 创建线程池
+func NewGoroutinePool(workerCount, queueSize int) *GoroutinePool {
+	pool := &GoroutinePool{
+		workerCount: workerCount,
+		taskQueue:   make(chan *Task, queueSize),
+		stopChan:    make(chan struct{}),
 	}
+	pool.startWorkers()
 	return pool
 }
 
+// InitPool 初始化线程池（单例模式）
+func InitPool(workerCount, queueSize int) {
+	once.Do(func() {
+		poolInstance = NewGoroutinePool(workerCount, queueSize)
+	})
+}
+
+// GetPool 获取全局线程池实例
+func GetPool() *GoroutinePool {
+	if poolInstance == nil {
+		log.Fatal("GoroutinePool not initialized. Call InitPool first.")
+	}
+	return poolInstance
+}
+
 // Submit 提交任务到线程池
-func (p *GoroutinePool) Submit(task Task, retryCount int, retryDelay time.Duration) {
+func (p *GoroutinePool) Submit(task *Task) {
 	p.wg.Add(1)
-	p.taskQueue <- &RetryTask{
-		Task:       task,
-		RetryCount: retryCount,
-		RetryDelay: retryDelay,
-	}
+	p.taskQueue <- task
 }
 
-// worker 执行任务的协程
-func (p *GoroutinePool) worker() {
-	for {
-		select {
-		case <-p.closeSignal:
-			return
-		case retryTask := <-p.taskQueue:
-			p.executeTask(retryTask)
-		}
-	}
-}
-
-// executeTask 执行任务并支持重试和异常处理
-func (p *GoroutinePool) executeTask(retryTask *RetryTask) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Panic recovered in task: %v\nStack trace:\n%s", r, debug.Stack())
-		}
-		p.wg.Done()
-	}()
-
-	for attempt := 0; attempt <= retryTask.RetryCount; attempt++ {
-		err := retryTask.Task.Run()
-		if err != nil {
-			log.Printf("Task failed on attempt %d: %v", attempt+1, err)
-			if attempt < retryTask.RetryCount {
-				delay := retryTask.RetryDelay * (1 << attempt) // 指数退避
-				log.Printf("Retrying task in %s...", delay)
-				time.Sleep(delay)
-			} else {
-				log.Printf("Task failed after maximum retries.")
-			}
-		} else {
-			return
-		}
-	}
-}
-
-// Close 关闭线程池并等待所有任务完成
-func (p *GoroutinePool) Close() {
-	close(p.closeSignal)
+// Shutdown 释放线程池
+func (p *GoroutinePool) Shutdown() {
+	close(p.stopChan)
 	p.wg.Wait()
 	close(p.taskQueue)
+	log.Println("GoroutinePool shutdown completed")
+}
+
+// startWorkers 启动协程
+func (p *GoroutinePool) startWorkers() {
+	for i := 0; i < p.workerCount; i++ {
+		go func() {
+			for {
+				select {
+				case task := <-p.taskQueue:
+					p.executeTask(task)
+				case <-p.stopChan:
+					return
+				}
+			}
+		}()
+	}
+}
+
+// executeTask 执行任务
+func (p *GoroutinePool) executeTask(task *Task) {
+	defer p.wg.Done()
+	task.Run()
 }
