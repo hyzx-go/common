@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"log"
 	"math/rand"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -81,4 +83,20 @@ func GetTraceId(ctx ...*gin.Context) string {
 
 	// 如果没有提供 gin.Context，直接返回一个新的 trace-id
 	return strings.ReplaceAll(uuid.New().String(), "-", "")
+}
+
+func GoSafeWithRetry(fn func(), retryCount int) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("Recovered from panic in goroutine: %v\n", r)
+				debug.PrintStack()
+				if retryCount > 0 {
+					log.Printf("Retrying task... (%d retries left)\n", retryCount)
+					GoSafeWithRetry(fn, retryCount-1)
+				}
+			}
+		}()
+		fn()
+	}()
 }

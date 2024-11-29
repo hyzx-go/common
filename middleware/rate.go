@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hyzx-go/common-b2c/utils"
 	"golang.org/x/time/rate"
 	"net/http"
 	"sync"
@@ -54,12 +55,13 @@ func cleanupLimiters() {
 
 // 中间件实现
 func RateLimitMiddleware() gin.HandlerFunc {
-	go func() {
+	clearFn := func() {
 		for {
 			time.Sleep(time.Minute) // 定时清理
 			cleanupLimiters()
 		}
-	}()
+	}
+	utils.GoSafeWithRetry(clearFn, 2)
 
 	return func(c *gin.Context) {
 		clientIP := c.ClientIP()
