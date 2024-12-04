@@ -16,6 +16,11 @@ type Response struct {
 	Data       interface{} `json:"data,omitempty"`
 }
 
+type ErrResponse struct {
+	Code ErrorCode   `json:"code"`
+	Data interface{} `json:"data,omitempty"`
+}
+
 func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	if c.IsAborted() {
 		return
@@ -33,19 +38,19 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	c.Abort()
 }
 
-func Fail(code ErrorCode, err error, c *gin.Context) {
+func Fail(errResp ErrResponse, err error, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
-	module, detailCode := ParseErrorCode(code)
+	module, detailCode := ParseErrorCode(errResp.Code)
 
 	c.JSON(http.StatusOK, Response{
 		TraceId:    utils.GetTraceId(c),
-		Code:       code,
+		Code:       errResp.Code,
 		Module:     module.String(),
 		DetailCode: detailCode,
 		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
-		Data:       err.Error(),
+		Data:       errResp.Data,
 	})
 }
 
