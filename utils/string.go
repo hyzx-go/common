@@ -99,24 +99,24 @@ func RemovePrefixFromURLs(input, prefix string) string {
 	return strings.Join(urls, ",")
 }
 
-func ConvertToInt64(value any) (int64, error) {
-	switch v := value.(type) {
-	case int:
-		return int64(v), nil
-	case int32:
-		return int64(v), nil
-	case int64:
-		return v, nil
-	case float64:
-		return int64(v), nil
-	case float32:
-		return int64(v), nil
-	case string:
-		return strconv.ParseInt(v, 10, 64)
-	default:
-		return 0, fmt.Errorf("unsupported type: %T", value)
-	}
-}
+//func ConvertToInt64(value any) (int64, error) {
+//	switch v := value.(type) {
+//	case int:
+//		return int64(v), nil
+//	case int32:
+//		return int64(v), nil
+//	case int64:
+//		return v, nil
+//	case float64:
+//		return int64(v), nil
+//	case float32:
+//		return int64(v), nil
+//	case string:
+//		return strconv.ParseInt(v, 10, 64)
+//	default:
+//		return 0, fmt.Errorf("unsupported type: %T", value)
+//	}
+//}
 
 func ToString(value interface{}) string {
 	switch v := value.(type) {
