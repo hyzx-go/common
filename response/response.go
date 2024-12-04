@@ -38,7 +38,7 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	c.Abort()
 }
 
-func Fail(errResp ErrResp, c *gin.Context) {
+func Fail(errResp *ErrResp, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
