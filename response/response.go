@@ -16,7 +16,7 @@ type Response struct {
 	Data       interface{} `json:"data,omitempty"`
 }
 
-type ErrResponse struct {
+type ErrResp struct {
 	Code ErrorCode   `json:"code"`
 	Data interface{} `json:"data,omitempty"`
 }
@@ -38,7 +38,7 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	c.Abort()
 }
 
-func Fail(errResp ErrResponse, c *gin.Context) {
+func Fail(errResp ErrResp, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
