@@ -54,13 +54,10 @@ func Fail(errResp *ErrResp, c *gin.Context) {
 
 // 成功响应
 func Ok(data interface{}, c *gin.Context) {
-	module, DetailCode := ParseErrorCode(Success)
 	c.JSON(http.StatusOK, Response{
-		Code:       Success,
-		Module:     module.String(),
-		DetailCode: DetailCode,
-		Message:    GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
-		Data:       data,
+		Code:    Success,
+		Message: GetErrorMessage(Success, Lang(c.GetHeader("Accept-Language"))),
+		Data:    data,
 	})
 }
 
