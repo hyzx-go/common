@@ -31,6 +31,7 @@ const (
 	_defaultMysqlKey      = "mysql"
 	_defaultRedisKey      = "redis"
 	_defaultSystemKey     = "system"
+	_defaultAisKey        = "ais"
 	_defaultOssKey        = "oss"
 	_defaultHttpClientKey = "httpClient"
 )
@@ -50,6 +51,8 @@ func getBeanFactory(key string) BeanFactory {
 	switch key {
 	case _defaultSystemKey:
 		return &SystemConf{}
+	case _defaultAisKey:
+		return &AisConf{}
 	case _defaultLogKey:
 		return &LogConf{}
 	case _defaultMysqlKey:
@@ -63,6 +66,19 @@ func getBeanFactory(key string) BeanFactory {
 	default:
 		log.GetLogger().Error(fmt.Sprintf("cannot find this key %s's beanFactory", key))
 	}
+	return nil
+}
+
+func (a *AisConf) Initialize(inConfig bool, p *parser) error {
+	if !inConfig {
+		panic(errors.New("please check ais config"))
+	}
+	p.aisConf = a
+
+	return nil
+}
+
+func (a *AisConf) Destroy() error {
 	return nil
 }
 

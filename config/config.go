@@ -21,6 +21,14 @@ type Config struct {
 	Mysql  MysqlList  `mapstructure:"mysql" json:"mysql" yaml:"mysql"`
 	Redis  RedisConf  `mapstructure:"redis" json:"redis" yaml:"redis"`
 	Oss    OssConf    `mapstructure:"oss" json:"oss" yaml:"oss"`
+	Ais    AisConf    `mapstructure:"ais" json:"ais" yaml:"ais"`
+}
+type AisConf struct {
+	ResponseType string `mapstructure:"response_type" json:"response_type" yaml:"response_type"`
+	RedirectUri  string `mapstructure:"redirect_uri" json:"redirect_uri" yaml:"redirect_uri"`
+	Scope        string `mapstructure:"scope" json:"scope" yaml:"scope"`
+	State        string `mapstructure:"state" json:"state" yaml:"state"`
+	GrantType    string `mapstructure:"grant_type" json:"grant_type" yaml:"grant_type"`
 }
 
 type ServerConf struct {

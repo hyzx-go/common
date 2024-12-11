@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"log"
+	"github.com/hyzx-go/common-b2c/log"
 	"sync"
 )
 
@@ -39,7 +39,7 @@ func InitPool(workerCount, queueSize int) {
 // GetPool 获取全局线程池实例
 func GetPool() *GoroutinePool {
 	if poolInstance == nil {
-		log.Fatal("GoroutinePool not initialized. Call InitPool first.")
+		log.Ctx(nil).Info("GoroutinePool not initialized. Call InitPool first.")
 	}
 	return poolInstance
 }
@@ -55,17 +55,32 @@ func (p *GoroutinePool) Shutdown() {
 	close(p.stopChan)
 	p.wg.Wait()
 	close(p.taskQueue)
-	log.Println("GoroutinePool shutdown completed")
+	log.Ctx(nil).Info("GoroutinePool shutdown completed")
 }
 
 // startWorkers 启动协程
 func (p *GoroutinePool) startWorkers() {
 	for i := 0; i < p.workerCount; i++ {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// 可以在这里记录日志或采取相应措施
+					log.Ctx(nil).Error("Worker1 panic recovered:", r)
+				}
+			}()
+
 			for {
 				select {
 				case task := <-p.taskQueue:
-					p.executeTask(task)
+					// 执行任务时也可以加一层 recover，防止单个任务崩溃影响整个协程
+					func() {
+						defer func() {
+							if r := recover(); r != nil {
+								log.Ctx(nil).Error("Worker2 panic recovered:", r)
+							}
+						}()
+						p.executeTask(task)
+					}()
 				case <-p.stopChan:
 					return
 				}

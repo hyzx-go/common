@@ -29,6 +29,7 @@ type Parser interface {
 	GetEnv() string
 	//GetErrorMsg(code string) string
 	GetSystemConf() (*SystemConf, error)
+	GetAisConf() (*AisConf, error)
 	GetLogConf() (*LogConf, error)
 	GetHttpClientConf() *HttpClientConf
 
@@ -60,6 +61,7 @@ type parser struct {
 
 	factoryBeans   []BeanFactory
 	systemConf     *SystemConf
+	aisConf        *AisConf
 	logConf        *LogConf
 	mysqlConf      MysqlList
 	redisConf      RedisList
@@ -102,6 +104,13 @@ func (p *parser) GetSystemConf() (*SystemConf, error) {
 		return nil, ErrNotFind
 	}
 	return p.systemConf, nil
+}
+
+func (p *parser) GetAisConf() (*AisConf, error) {
+	if p.aisConf == nil {
+		return nil, ErrNotFind
+	}
+	return p.aisConf, nil
 }
 
 func (p *parser) GetLogConf() (*LogConf, error) {
