@@ -25,14 +25,12 @@ func Resp(code ErrorCode, data interface{}, msg string, c *gin.Context) {
 	if c.IsAborted() {
 		return
 	}
-	module, DetailCode := ParseErrorCode(code)
+
 	// 开始时间
 	response := Response{
-		Code:       code,
-		Module:     module.String(),
-		DetailCode: DetailCode,
-		Message:    msg,
-		Data:       data,
+		Code:    code,
+		Message: msg,
+		Data:    data,
 	}
 	c.JSON(http.StatusOK, response)
 	c.Abort()
