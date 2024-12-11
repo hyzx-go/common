@@ -44,6 +44,7 @@ func (p *parser) initBeanKeys() {
 		_defaultRedisKey,
 		_defaultHttpClientKey,
 		_defaultOssKey,
+		_defaultAisKey,
 	}
 }
 
