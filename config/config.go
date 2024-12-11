@@ -24,7 +24,7 @@ type Config struct {
 	Ais    AisConf    `mapstructure:"ais" json:"ais" yaml:"ais"`
 }
 type AisConf struct {
-	ClientId     string `json:"client_id" yaml:"client_id"`
+	ClientId     string `mapstructure:"client_id" json:"client_id" yaml:"client_id"`
 	ResponseType string `mapstructure:"response_type" json:"response_type" yaml:"response_type"`
 	RedirectUri  string `mapstructure:"redirect_uri" json:"redirect_uri" yaml:"redirect_uri"`
 	Scope        string `mapstructure:"scope" json:"scope" yaml:"scope"`
