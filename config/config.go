@@ -24,15 +24,16 @@ type Config struct {
 	Ais    AisConf    `mapstructure:"ais" json:"ais" yaml:"ais"`
 }
 type AisConf struct {
-	ClientId     string `mapstructure:"client_id" json:"client_id" yaml:"client_id"`
-	ResponseType string `mapstructure:"response_type" json:"response_type" yaml:"response_type"`
-	RedirectUri  string `mapstructure:"redirect_uri" json:"redirect_uri" yaml:"redirect_uri"`
-	Scope        string `mapstructure:"scope" json:"scope" yaml:"scope"`
-	State        string `mapstructure:"state" json:"state" yaml:"state"`
-	GrantType    string `mapstructure:"grant_type" json:"grant_type" yaml:"grant_type"`
-	CodeUri      string `mapstructure:"code_uri" json:"code_uri" yaml:"code_uri"`
-	TokenUri     string `mapstructure:"token_uri" json:"token_uri" yaml:"token_uri"`
-	VerifyUri    string `mapstructure:"verify_uri" json:"verify_uri" yaml:"verify_uri"`
+	ClientId        string `mapstructure:"client_id" json:"client_id" yaml:"client_id"`
+	ResponseType    string `mapstructure:"response_type" json:"response_type" yaml:"response_type"`
+	RedirectUri     string `mapstructure:"redirect_uri" json:"redirect_uri" yaml:"redirect_uri"`
+	Scope           string `mapstructure:"scope" json:"scope" yaml:"scope"`
+	State           string `mapstructure:"state" json:"state" yaml:"state"`
+	GrantType       string `mapstructure:"grant_type" json:"grant_type" yaml:"grant_type"`
+	CodeUri         string `mapstructure:"code_uri" json:"code_uri" yaml:"code_uri"`
+	TokenUri        string `mapstructure:"token_uri" json:"token_uri" yaml:"token_uri"`
+	VerifyUri       string `mapstructure:"verify_uri" json:"verify_uri" yaml:"verify_uri"`
+	ClientAssertion string `mapstructure:"client_assertion" json:"client_assertion" yaml:"client_assertion"`
 }
 
 type ServerConf struct {
