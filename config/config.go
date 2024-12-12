@@ -30,6 +30,9 @@ type AisConf struct {
 	Scope        string `mapstructure:"scope" json:"scope" yaml:"scope"`
 	State        string `mapstructure:"state" json:"state" yaml:"state"`
 	GrantType    string `mapstructure:"grant_type" json:"grant_type" yaml:"grant_type"`
+	CodeUri      string `mapstructure:"code_uri" json:"code_uri" yaml:"code_uri"`
+	TokenUri     string `mapstructure:"token_uri" json:"token_uri" yaml:"token_uri"`
+	VerifyUri    string `mapstructure:"verify_uri" json:"verify_uri" yaml:"verify_uri"`
 }
 
 type ServerConf struct {
